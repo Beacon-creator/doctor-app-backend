@@ -1,0 +1,105 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// created for the app user
+model User {
+  id           String   @id @default(uuid())
+  firebaseId   String   @unique
+  fullName     String
+  email        String   @unique
+  phone        String?
+  role         Role     @default(PATIENT)
+  avatarUrl    String?
+  location     String?
+  lastSeenAt   DateTime?
+
+  doctorProfile DoctorProfile?
+  appointments  Appointment[]
+  messagesSent  Message[] @relation("SentMessages")
+  messagesRecv  Message[] @relation("ReceivedMessages")
+  notifications Notification[]
+  payments      Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// doctor's schema
+model DoctorProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  specialty   String
+  about       String
+  rating      Float   @default(0)
+  totalReviews Int    @default(0)
+  pictureUrl  String?
+
+  availabilities Availability[]
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// doctor availability schema
+model Availability {
+  id        String   @id @default(uuid())
+  doctorId  String
+  dayOfWeek Int      // 0–6 (Sun–Sat)
+  startTime String   // "09:00"
+  endTime   String   // "17:00"
+  isActive  Boolean  @default(true)
+
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id])
+}
+
+
+model Appointment {
+  id        String   @id @default(uuid())
+  userId    String
+  doctorId  String
+  date      DateTime
+  status    AppointmentStatus
+  paymentId String?
+
+  user    User   @relation(fields: [userId], references: [id])
+  payment Payment?
+
+  createdAt DateTime @default(now())
+}
+
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+
+model Payment {
+  id            String   @id @default(uuid())
+  userId        String
+  amount        Float
+  currency      String   @default("NGN")
+  provider      String   // Paystack / Stripe
+  reference     String   @unique
+  status        PaymentStatus
+
+  appointment Appointment?
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
