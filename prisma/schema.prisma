@@ -6,6 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // created for the app user
@@ -58,7 +59,7 @@ model Availability {
   doctor DoctorProfile @relation(fields: [doctorId], references: [id])
 }
 
-
+// user & doctor appointment
 model Appointment {
   id        String   @id @default(uuid())
   userId    String
@@ -74,14 +75,7 @@ model Appointment {
 }
 
 
-enum AppointmentStatus {
-  PENDING
-  CONFIRMED
-  COMPLETED
-  CANCELLED
-}
-
-
+// payment schema
 model Payment {
   id            String   @id @default(uuid())
   userId        String
@@ -98,8 +92,66 @@ model Payment {
   createdAt DateTime @default(now())
 }
 
+//chatroom user <-> doctor
+model ChatRoom {
+  id        String   @id @default(uuid())
+  userId    String
+  doctorId  String
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+}
+
+// messages sent 
+model Message {
+  id         String   @id @default(uuid())
+  chatRoomId String
+  senderId   String
+  receiverId String
+  content    String
+  isRead     Boolean  @default(false)
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+
+//app notifications schema
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  content   String
+  isRead    Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+//payment status
 enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+
+//users roles
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+//appointment status
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
 }
