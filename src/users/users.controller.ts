@@ -1,10 +1,18 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+import { UsersService } from './users.service';
+import { PrismaService } from '../prisma/prisma.service';
 
+@Controller('users')
+export class UsersController {
+  constructor(
+    private usersService: UsersService,
+    private prisma: PrismaService,
+  ) {}
 
-@UseGuards(FirebaseAuthGuard)
-@Get('me')
-async me(@Req() req) {
+  @UseGuards(FirebaseAuthGuard)
+  @Get('me')
+  async me(@Req() req) {
   return this.usersService.findOrCreate(req.user);
 }
 
@@ -36,7 +44,9 @@ async createAppointment(
       doctorId: body.doctorId,
       date: new Date(body.date),
       status: 'CONFIRMED',
-      paymentId: body.paymentId,
+      payment: {
+        connect: { id: body.paymentId },
+      },
     },
   });
 }
@@ -49,4 +59,5 @@ async myAppointments(@Req() req) {
     where: { userId: req.user.uid },
     orderBy: { date: 'asc' },
   });
+  }
 }
