@@ -6,7 +6,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // created for the app user
@@ -43,7 +42,8 @@ model DoctorProfile {
   pictureUrl  String?
 
   availabilities Availability[]
-
+  appointments   Appointment[]  
+  
   user User @relation(fields: [userId], references: [id])
 }
 
@@ -66,10 +66,11 @@ model Appointment {
   doctorId  String
   date      DateTime
   status    AppointmentStatus
-  paymentId String?
 
   user    User   @relation(fields: [userId], references: [id])
-  payment Payment?
+  doctor  DoctorProfile @relation(fields: [doctorId], references: [id])
+
+  payment Payment?   // no FK here
 
   createdAt DateTime @default(now())
 }
@@ -79,18 +80,19 @@ model Appointment {
 model Payment {
   id            String   @id @default(uuid())
   userId        String
+  appointmentId String   @unique   // FK + enforces 1–1
   amount        Float
   currency      String   @default("NGN")
-  provider      String   // Paystack / Stripe
+  provider      String
   reference     String   @unique
   status        PaymentStatus
 
-  appointment Appointment?
-
-  user User @relation(fields: [userId], references: [id])
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
 }
+
 
 //chatroom user <-> doctor
 model ChatRoom {
