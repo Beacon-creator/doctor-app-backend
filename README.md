@@ -1,9 +1,9 @@
 
-🧱 STEP 1: Backend Project Setup (NestJS)
-1️⃣ Install NestJS CLI (if not already)
+ STEP 1: Backend Project Setup (NestJS)
+ Install NestJS CLI (if not already)
 npm install -g @nestjs/cli
 
-2️⃣ Create the project
+ Create the project
 nest new doctor-app-backend
 cd doctor-app-backend
 
@@ -23,8 +23,8 @@ npm install @nestjs/config class-validator class-transformer
 Firebase Admin SDK
 npm install firebase-admin
 
-🔐 STEP 3: Firebase Authentication Setup
-1️⃣ Create Firebase Project
+ STEP 3: Firebase Authentication Setup
+1 Create Firebase Project
 Go to Firebase Console
 Create project
 Enable Authentication
@@ -32,12 +32,12 @@ Enable providers:
 Email/Password
 Google (optional)
 
-2️⃣ Create Service Account
+ Create Service Account
 Project Settings → Service Accounts
 Generate private key
-Download JSON file ⚠️ DO NOT commit this file
+Download JSON file DO NOT commit this file
 
-3️⃣ Initialize Firebase Admin in NestJS
+ Initialize Firebase Admin in NestJS
 Create file:
 src/firebase/firebase.service.ts
 
@@ -47,12 +47,12 @@ src/firebase/firebase.module.ts
 🛡 STEP 4: Auth Guard (JWT from Firebase)
 src/auth/firebase-auth.guard.ts
 
-👥 STEP 5: Database Schema (Prisma)
+ STEP 5: Database Schema (Prisma)
 
 Edit to suit: prisma/schema.prisma
 Run: npx prisma migrate dev --name init
 
-🔁 STEP 6: Sync Firebase User → Local DB
+ STEP 6: Sync Firebase User → Local DB
 Create:
 src/users/users.service.ts
 
@@ -60,7 +60,7 @@ src/users/users.service.ts
 Controller:
 GET /me
 
-🧪 STEP 7: Test Auth Flow
+ STEP 7: Test Auth Flow
 Login from mobile/web
 Get Firebase ID token
 

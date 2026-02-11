@@ -10,7 +10,7 @@ export class PaymentsService {
     private notifications: NotificationsService,
   ) {}
 
-  // 1️⃣ Initialize payment
+  // Initialize payment
   async initializePayment(userId: string, amount: number, email: string) {
     const response = await axios.post(
       `${process.env.PAYSTACK_BASE_URL}/transaction/initialize`,
@@ -28,7 +28,7 @@ export class PaymentsService {
     return response.data;
   }
 
-  // 2️⃣ Verify payment
+  //  Verify payment
   async verifyPayment(reference: string, userId: string) {
     const response = await axios.get(
       `${process.env.PAYSTACK_BASE_URL}/transaction/verify/${reference}`,

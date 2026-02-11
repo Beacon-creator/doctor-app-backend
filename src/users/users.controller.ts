@@ -10,54 +10,71 @@ export class UsersController {
     private prisma: PrismaService,
   ) {}
 
+  // Get current user profile
   @UseGuards(FirebaseAuthGuard)
   @Get('me')
   async me(@Req() req) {
-  return this.usersService.findOrCreate(req.user);
-}
+    return this.usersService.findOrCreate(req.user);
+  }
 
-
-@Get('doctors')
-async getDoctors() {
-  return this.prisma.doctorProfile.findMany({
-    include: {
-      user: {
-        select: {
-          fullName: true,
-          avatarUrl: true,
+  // List all doctors
+  @Get('doctors')
+  async getDoctors() {
+    return this.prisma.doctorProfile.findMany({
+      include: {
+        user: {
+          select: {
+            fullName: true,
+            avatarUrl: true,
+          },
         },
       },
-    },
-  });
-}
+    });
+  }
 
+  // Create appointment
+  @UseGuards(FirebaseAuthGuard)
+  @Post('appointments')
+  async createAppointment(
+    @Req() req,
+    @Body() body: { doctorId: string; date: string; paymentId?: string },
+  ) {
+    const user = await this.usersService.findOrCreate(req.user);
 
-@UseGuards(FirebaseAuthGuard)
-@Post('appointments')
-async createAppointment(
-  @Req() req,
-  @Body() body: { doctorId: string; date: string; paymentId: string },
-) {
-  return this.prisma.appointment.create({
-    data: {
-      userId: req.user.uid,
-      doctorId: body.doctorId,
-      date: new Date(body.date),
-      status: 'CONFIRMED',
-      payment: {
-        connect: { id: body.paymentId },
+    // Optional: check doctor exists
+    const doctor = await this.prisma.doctorProfile.findUnique({
+      where: { id: body.doctorId },
+    });
+    if (!doctor) throw new Error('Doctor not found');
+
+    return this.prisma.appointment.create({
+      data: {
+        userId: user.id,
+        doctorId: body.doctorId,
+        date: new Date(body.date),
+        status: 'PENDING', // start as pending, confirm after payment
+        ...(body.paymentId && {
+          payment: { connect: { id: body.paymentId } },
+        }),
       },
-    },
-  });
-}
+    });
+  }
 
+  // Get user's appointments
+  @UseGuards(FirebaseAuthGuard)
+  @Get('appointments')
+  async myAppointments(@Req() req) {
+    const user = await this.usersService.findOrCreate(req.user);
 
-@UseGuards(FirebaseAuthGuard)
-@Get('appointments')
-async myAppointments(@Req() req) {
-  return this.prisma.appointment.findMany({
-    where: { userId: req.user.uid },
-    orderBy: { date: 'asc' },
-  });
+    return this.prisma.appointment.findMany({
+      where: { userId: user.id },
+      orderBy: { date: 'asc' },
+      include: {
+        doctor: {
+          include: { user: { select: { fullName: true, avatarUrl: true } } },
+        },
+        payment: true,
+      },
+    });
   }
 }
