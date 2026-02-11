@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,104 +6,83 @@ datasource db {
   provider = "postgresql"
 }
 
-// created for the app user
 model User {
-  id           String   @id @default(uuid())
-  firebaseId   String   @unique
-  fullName     String
-  email        String   @unique
-  phone        String?
-  role         Role     @default(PATIENT)
-  avatarUrl    String?
-  location     String?
-  lastSeenAt   DateTime?
-
-  doctorProfile DoctorProfile?
+  id            String         @id @default(uuid())
+  firebaseId    String         @unique
+  fullName      String
+  email         String         @unique
+  phone         String?
+  role          Role           @default(PATIENT)
+  avatarUrl     String?
+  location      String?
+  lastSeenAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   appointments  Appointment[]
-  messagesSent  Message[] @relation("SentMessages")
-  messagesRecv  Message[] @relation("ReceivedMessages")
+  doctorProfile DoctorProfile?
+  messagesRecv  Message[]      @relation("ReceivedMessages")
+  messagesSent  Message[]      @relation("SentMessages")
   notifications Notification[]
   payments      Payment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
-// doctor's schema
 model DoctorProfile {
-  id          String  @id @default(uuid())
-  userId      String  @unique
-  specialty   String
-  about       String
-  rating      Float   @default(0)
-  totalReviews Int    @default(0)
-  pictureUrl  String?
-
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  specialty      String
+  about          String
+  rating         Float          @default(0)
+  totalReviews   Int            @default(0)
+  pictureUrl     String?
+  appointments   Appointment[]
   availabilities Availability[]
-  appointments   Appointment[]  
-  
-  user User @relation(fields: [userId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
 }
 
-// doctor availability schema
 model Availability {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   doctorId  String
-  dayOfWeek Int      // 0–6 (Sun–Sat)
-  startTime String   // "09:00"
-  endTime   String   // "17:00"
-  isActive  Boolean  @default(true)
-
-  doctor DoctorProfile @relation(fields: [doctorId], references: [id])
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  isActive  Boolean       @default(true)
+  doctor    DoctorProfile @relation(fields: [doctorId], references: [id])
 }
 
-// user & doctor appointment
 model Appointment {
-  id        String   @id @default(uuid())
+  id        String            @id @default(uuid())
   userId    String
   doctorId  String
   date      DateTime
   status    AppointmentStatus
-
-  user    User   @relation(fields: [userId], references: [id])
-  doctor  DoctorProfile @relation(fields: [doctorId], references: [id])
-
-  payment Payment?   // no FK here
-
-  createdAt DateTime @default(now())
+  createdAt DateTime          @default(now())
+  doctor    DoctorProfile     @relation(fields: [doctorId], references: [id])
+  user      User              @relation(fields: [userId], references: [id])
+  payment   Payment?
 }
 
-
-// payment schema
 model Payment {
-  id            String   @id @default(uuid())
+  id            String        @id @default(uuid())
   userId        String
-  appointmentId String   @unique   // FK + enforces 1–1
+  appointmentId String        @unique
   amount        Float
-  currency      String   @default("NGN")
+  currency      String        @default("NGN")
   provider      String
-  reference     String   @unique
+  reference     String        @unique
   status        PaymentStatus
-
-  appointment Appointment @relation(fields: [appointmentId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
+  createdAt     DateTime      @default(now())
+  appointment   Appointment   @relation(fields: [appointmentId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
 }
 
-
-//chatroom user <-> doctor
 model ChatRoom {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
   doctorId  String
-
-  messages Message[]
-
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  messages  Message[]
 }
 
-// messages sent 
 model Message {
   id         String   @id @default(uuid())
   chatRoomId String
@@ -112,44 +90,34 @@ model Message {
   receiverId String
   content    String
   isRead     Boolean  @default(false)
-
-  sender   User @relation("SentMessages", fields: [senderId], references: [id])
-  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id])
-
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
 }
 
-
-//app notifications schema
 model Notification {
   id        String   @id @default(uuid())
   userId    String
   title     String
   content   String
   isRead    Boolean  @default(false)
-
-  user User @relation(fields: [userId], references: [id])
-
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
-//payment status
 enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
 }
 
-
-//users roles
 enum Role {
   PATIENT
   DOCTOR
   ADMIN
 }
 
-//appointment status
 enum AppointmentStatus {
   PENDING
   CONFIRMED
