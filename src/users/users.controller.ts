@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -32,6 +32,10 @@ export class UsersController {
     });
   }
 
+  @Get('doctors/:id')
+  async getDoctorById(@Param('id') id:string) {
+    return this.usersService.getDoctorById(id);
+  }
   // Create appointment
   @UseGuards(FirebaseAuthGuard)
   @Post('appointments')

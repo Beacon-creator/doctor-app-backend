@@ -17,4 +17,20 @@ export class UsersService {
       },
     });
   }
+
+
+  async getDoctorById(id: string) {
+  return this.prisma.doctorProfile.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          fullName: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  });
+}
+
 }
