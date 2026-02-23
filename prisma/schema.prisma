@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -34,6 +35,7 @@ model DoctorProfile {
   rating         Float          @default(0)
   totalReviews   Int            @default(0)
   pictureUrl     String?
+  price          Float          @default(0)
   appointments   Appointment[]
   availabilities Availability[]
   user           User           @relation(fields: [userId], references: [id])
@@ -54,6 +56,7 @@ model Appointment {
   userId    String
   doctorId  String
   date      DateTime
+  time      String
   status    AppointmentStatus
   createdAt DateTime          @default(now())
   doctor    DoctorProfile     @relation(fields: [doctorId], references: [id])

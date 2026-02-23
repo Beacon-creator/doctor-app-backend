@@ -1,13 +1,15 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards, Patch, ForbiddenException } from '@nestjs/common';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Controller('users')
 export class UsersController {
   constructor(
     private usersService: UsersService,
     private prisma: PrismaService,
+    private notificationsService: NotificationsService,
   ) {}
 
   // Get current user profile
@@ -36,16 +38,17 @@ export class UsersController {
   async getDoctorById(@Param('id') id:string) {
     return this.usersService.getDoctorById(id);
   }
+
   // Create appointment
   @UseGuards(FirebaseAuthGuard)
   @Post('appointments')
   async createAppointment(
     @Req() req,
-    @Body() body: { doctorId: string; date: string; paymentId?: string },
+    @Body() body: { doctorId: string; date: string; time: string,paymentId?: string },
   ) {
     const user = await this.usersService.findOrCreate(req.user);
 
-    // Optional: check doctor exists
+   
     const doctor = await this.prisma.doctorProfile.findUnique({
       where: { id: body.doctorId },
     });
@@ -56,7 +59,8 @@ export class UsersController {
         userId: user.id,
         doctorId: body.doctorId,
         date: new Date(body.date),
-        status: 'PENDING', // start as pending, confirm after payment
+        time: body.time,
+        status: body.paymentId ? 'CONFIRMED' : 'PENDING',
         ...(body.paymentId && {
           payment: { connect: { id: body.paymentId } },
         }),
@@ -81,4 +85,39 @@ export class UsersController {
       },
     });
   }
+
+  
+  @UseGuards(FirebaseAuthGuard)
+  @Patch('appointments/:id/confirm')
+  async confirmAppointment(@Req() req, @Param('id') id: string) {
+    const user = await this.usersService.findOrCreate(req.user);
+
+    const appt = await this.prisma.appointment.findUnique({
+      where: { id },
+      include: {
+        doctor: { include: { user: true } },
+      },
+    });
+
+    if (!appt || appt.userId !== user.id) {
+      throw new ForbiddenException('Not your appointment');
+    }
+
+    const updated = await this.prisma.appointment.update({
+      where: { id },
+      data: { status: 'CONFIRMED' },
+    });
+
+    //  Auto notify user
+    await this.notificationsService.create(
+      user.id,
+      'Appointment confirmed',
+      `Your appointment with Dr. ${appt.doctor.user.fullName} has been confirmed.`
+    );
+
+    return updated;
+  }
+
+
 }
+
