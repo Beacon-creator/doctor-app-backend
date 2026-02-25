@@ -118,6 +118,20 @@ export class UsersController {
     return updated;
   }
 
+  @UseGuards(FirebaseAuthGuard)
+  @Patch('me')
+  async updateMe(@Req() req, @Body() body: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+  }) {
+    const user = await this.usersService.findOrCreate(req.user);
+
+    return this.prisma.user.update({
+      where: { id: user.id },
+      data: body,
+    });
+  }
 
 }
 
