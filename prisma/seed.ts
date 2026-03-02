@@ -1,11 +1,21 @@
 import { PrismaClient, Role } from "@prisma/client";
 import crypto from "crypto";
+import "dotenv/config";
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = new PrismaClient();
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString: process.env.DATABASE_URL!,
+  }),
+});
+
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  console.log(" Seeding database...");
+  console.log("DB URL", process.env.DATABASE_URL);
 
+  
   const doctors = [
     {
       fullName: "Dr. Aisha Bello",
