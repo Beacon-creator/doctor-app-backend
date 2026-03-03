@@ -12,10 +12,6 @@ const prisma = new PrismaClient({
 
 
 async function main() {
-  console.log(" Seeding database...");
-  console.log("DB URL", process.env.DATABASE_URL);
-
-  
   const doctors = [
     {
       fullName: "Dr. Aisha Bello",
@@ -57,10 +53,7 @@ async function main() {
       },
     });
   }
-
-  console.log("✅ Seed complete");
 }
 
 main()
-  .catch(console.error)
   .finally(() => prisma.$disconnect());
